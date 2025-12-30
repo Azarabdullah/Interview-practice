@@ -1,0 +1,7 @@
+{
+  "name": "InterView.ai",
+  "description": "AI-powered interview preparation platform featuring resume analysis and real-time voice mock interviews using Gemini Live API.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
