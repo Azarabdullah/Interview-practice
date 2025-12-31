@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { createBlob, decodeAudioData, base64ToUint8Array } from '../utils/audioUtils';
 import { Difficulty } from '../types';
-import { Mic, MicOff, PhoneOff, Activity, Volume2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Activity, Volume2, AlertCircle, RefreshCw, Radio } from 'lucide-react';
 
 interface LiveInterviewProps {
   resumeText: string;
@@ -43,7 +43,7 @@ const LiveInterview: React.FC<LiveInterviewProps> = ({ resumeText, difficulty, o
   const MAX_RETRIES = 3;
 
   // Visualizer Animation
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | null>(null);
 
   const cleanup = useCallback(() => {
     isConnectedRef.current = false;
@@ -413,87 +413,109 @@ const LiveInterview: React.FC<LiveInterviewProps> = ({ resumeText, difficulty, o
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-4xl mx-auto bg-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-       {/* Background Pulse Effect */}
-       <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-3xl transition-all duration-300 ${connectionState === 'connected' ? 'bg-emerald-500/20 scale-100 opacity-100' : 'bg-slate-500/10 scale-50 opacity-0'}`} />
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-5xl mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-12 shadow-2xl relative overflow-hidden animate-fade-in">
        
-       {/* Main Visualizer Circle */}
-       <div className="relative z-10 mb-12">
+       {/* Ambient glow for connected state */}
+       <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-[100px] transition-all duration-1000 ${
+         connectionState === 'connected' ? 'bg-indigo-500/20 opacity-100' : 'bg-red-500/10 opacity-0'
+       }`} />
+
+       {/* Top Status Bar */}
+       <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
+          <div className="flex items-center gap-2 px-4 py-2 bg-black/20 rounded-full border border-white/5 backdrop-blur-sm">
+             <div className={`w-2 h-2 rounded-full ${connectionState === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}></div>
+             <span className="text-xs font-mono text-slate-300 uppercase tracking-widest">
+                {connectionState === 'connected' ? 'LIVE' : 'OFFLINE'}
+             </span>
+          </div>
+          <div className="px-4 py-2 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-xs font-bold text-indigo-300 uppercase tracking-wider">
+             {difficulty} Mode
+          </div>
+       </div>
+       
+       {/* Main Visualizer */}
+       <div className="relative z-10 mb-16 mt-8">
+         {/* Outer glow rings */}
+         <div className={`absolute inset-0 rounded-full blur-xl transition-all duration-100 ${
+            connectionState === 'connected' ? 'bg-indigo-500/30' : 'bg-transparent'
+         }`} style={{ transform: `scale(${1 + audioLevel * 0.08})` }} />
+
          <div 
-           className={`w-40 h-40 rounded-full bg-slate-900 border-4 flex items-center justify-center transition-all duration-300 ${
-             connectionState === 'connected' ? 'border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.3)]' : 
-             connectionState === 'error' ? 'border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.3)]' :
-             'border-slate-700'
+           className={`relative w-48 h-48 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+             connectionState === 'connected' 
+               ? 'bg-gradient-to-br from-indigo-600 to-purple-700 shadow-indigo-500/50' 
+               : connectionState === 'error' 
+                 ? 'bg-slate-800 border-2 border-red-500/50' 
+                 : 'bg-slate-800 border-2 border-slate-700'
            }`}
            style={{
-             transform: connectionState === 'connected' ? `scale(${1 + Math.min(audioLevel * 0.05, 0.2)})` : 'scale(1)'
+             transform: connectionState === 'connected' ? `scale(${1 + Math.min(audioLevel * 0.05, 0.3)})` : 'scale(1)'
            }}
          >
+            {/* Inner pulsing core */}
+            {connectionState === 'connected' && (
+               <div className="absolute inset-2 rounded-full border border-white/20 animate-pulse"></div>
+            )}
+
             {connectionState === 'connected' ? (
-              <Activity className="w-16 h-16 text-emerald-400 animate-pulse" />
+              <Activity className="w-20 h-20 text-white/90" />
             ) : connectionState === 'error' ? (
-              <AlertCircle className="w-16 h-16 text-red-400" />
+              <AlertCircle className="w-20 h-20 text-red-400" />
             ) : connectionState === 'ended' ? (
-              <PhoneOff className="w-16 h-16 text-slate-400" />
+              <PhoneOff className="w-20 h-20 text-slate-400" />
             ) : (
-              <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin" />
+              <div className="w-16 h-16 border-4 border-indigo-500/30 border-t-indigo-400 rounded-full animate-spin" />
             )}
          </div>
-         {/* Ripple rings */}
-         {connectionState === 'connected' && (
-            <>
-               <div className="absolute inset-0 border-2 border-emerald-500/30 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-               <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite_1s]" />
-            </>
-         )}
        </div>
 
        {/* Status Text */}
-       <h2 className="text-2xl font-semibold text-white mb-2 tracking-wide">{getStatusTitle()}</h2>
-       <p className="text-slate-400 mb-12 font-medium h-6 text-center animate-pulse">{status}</p>
+       <div className="text-center mb-12 relative z-10">
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">{getStatusTitle()}</h2>
+          <p className={`text-lg font-medium h-6 transition-colors ${connectionState === 'error' ? 'text-red-400' : 'text-slate-400'}`}>
+             {status}
+          </p>
+       </div>
 
-       {/* Controls */}
-       <div className="flex items-center gap-6 z-10">
+       {/* Control Bar */}
+       <div className="flex items-center gap-8 z-10 p-4 bg-slate-950/50 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
           <button 
             onClick={toggleMute}
             disabled={connectionState !== 'connected'}
-            className={`p-4 rounded-full transition-all duration-200 ${
+            className={`p-5 rounded-full transition-all duration-200 hover:scale-110 ${
               isMuted 
-                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
+                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30' 
                 : connectionState !== 'connected' 
-                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                  : 'bg-slate-700 text-white hover:bg-slate-600'
+                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 border border-indigo-400/50'
             }`}
           >
             {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
           </button>
 
-          <button 
-            onClick={onEndSession}
-            className="px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-semibold flex items-center gap-2 transition-colors shadow-lg shadow-red-500/20"
-          >
-            <PhoneOff className="w-5 h-5" />
-            {connectionState === 'ended' ? 'Back to Feedback' : 'End Interview'}
-          </button>
-          
           {connectionState === 'error' && (
             <button 
                onClick={() => connect(false)} 
-               className="p-4 rounded-full bg-slate-700 text-white hover:bg-slate-600 transition-colors"
+               className="p-5 rounded-full bg-slate-800 text-white hover:bg-slate-700 border border-slate-600 transition-all hover:scale-110"
                title="Retry Connection"
             >
                <RefreshCw className="w-6 h-6" />
             </button>
           )}
 
-          <div className="p-4 rounded-full bg-slate-700 text-slate-400 opacity-50 cursor-not-allowed">
-             <Volume2 className="w-6 h-6" />
-          </div>
-       </div>
+          <button 
+            onClick={onEndSession}
+            className="px-10 py-5 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold flex items-center gap-3 transition-all hover:shadow-red-600/30 shadow-lg hover:scale-105"
+          >
+            <PhoneOff className="w-5 h-5" />
+            {connectionState === 'ended' ? 'Back to Feedback' : 'End Interview'}
+          </button>
+          
+          <div className="w-[1px] h-10 bg-white/10 mx-2"></div>
 
-       {/* Difficulty Badge */}
-       <div className="absolute top-6 right-6 px-3 py-1 bg-slate-700/50 rounded-full border border-slate-600 text-xs font-mono text-emerald-400 uppercase tracking-wider">
-          Level: {difficulty}
+          <div className="p-4 text-slate-500">
+             <Radio className={`w-6 h-6 ${connectionState === 'connected' ? 'text-emerald-500 animate-pulse' : 'text-slate-700'}`} />
+          </div>
        </div>
     </div>
   );

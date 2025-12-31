@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, FileCode } from 'lucide-react';
 
 interface FileUploadProps {
   onContentChange: (content: string) => void;
@@ -32,69 +32,81 @@ const FileUpload: React.FC<FileUploadProps> = ({ onContentChange, onSubmit, isPr
   };
 
   return (
-    <div className="max-w-2xl mx-auto w-full">
-      <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-xl">
-        <h2 className="text-2xl font-bold text-white mb-2">Upload Resume</h2>
-        <p className="text-slate-400 mb-6">Paste your resume text below or upload a plain text file (.txt, .md).</p>
-        
-        <div className="space-y-4">
-          {/* File Input */}
-          <div className="relative group">
-            <input 
-              type="file" 
-              accept=".txt,.md" 
-              onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            />
-            <div className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-all ${fileName ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-600 group-hover:border-emerald-400 group-hover:bg-slate-700/50'}`}>
-              {fileName ? (
-                <>
-                  <CheckCircle className="w-10 h-10 text-emerald-400 mb-3" />
-                  <p className="text-emerald-300 font-medium">{fileName}</p>
-                  <p className="text-xs text-emerald-500/70 mt-1">Click to change file</p>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-10 h-10 text-slate-400 mb-3 group-hover:text-emerald-400 transition-colors" />
-                  <p className="text-slate-300 font-medium">Click to upload file</p>
-                  <p className="text-xs text-slate-500 mt-1">Supports .txt, .md</p>
-                </>
-              )}
-            </div>
+    <div className="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+      
+      {/* Option 1: File Drop */}
+      <div className="relative group h-full min-h-[300px]">
+        <input 
+          type="file" 
+          accept=".txt,.md" 
+          onChange={handleFileChange}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+        />
+        <div className={`h-full bg-slate-900/50 backdrop-blur-md border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all duration-300 ${
+          fileName 
+            ? 'border-emerald-500/50 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.1)]' 
+            : 'border-slate-700 group-hover:border-indigo-400/50 group-hover:bg-slate-800/50'
+        }`}>
+          <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300 ${
+            fileName ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+          }`}>
+            {fileName ? <FileCode className="w-10 h-10" /> : <Upload className="w-10 h-10" />}
           </div>
+          
+          {fileName ? (
+            <>
+              <p className="text-xl font-semibold text-white mb-2 break-all">{fileName}</p>
+              <div className="flex items-center gap-2 text-emerald-400 text-sm bg-emerald-500/10 px-3 py-1 rounded-full">
+                <CheckCircle className="w-4 h-4" />
+                <span>Ready to analyze</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xl font-semibold text-white mb-2">Drop your resume</p>
+              <p className="text-slate-400 text-sm max-w-[200px]">Supports .txt or .md format plain text files</p>
+            </>
+          )}
+        </div>
+      </div>
 
-          <div className="relative">
-             <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-700"></div>
-             </div>
-             <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-slate-800 text-slate-500 uppercase tracking-wider font-semibold">Or Paste Text</span>
-             </div>
+      {/* Option 2: Paste Text */}
+      <div className="flex flex-col gap-4 h-full">
+        <div className="relative flex-grow">
+          <div className="absolute top-0 left-0 right-0 h-10 bg-slate-900/80 backdrop-blur-md rounded-t-3xl border-x border-t border-slate-700/50 flex items-center px-4 gap-2 z-10">
+             <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+             <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/50"></div>
+             <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/50"></div>
+             <span className="ml-2 text-xs text-slate-500 font-mono">resume.txt</span>
           </div>
-
           <textarea
             value={text}
             onChange={handleTextChange}
-            placeholder="Experience&#10;Software Engineer at Tech Corp...&#10;&#10;Education&#10;BS Computer Science..."
-            className="w-full h-48 bg-slate-900 border border-slate-700 rounded-xl p-4 text-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none resize-none placeholder-slate-600 font-mono text-sm"
+            placeholder="// Or paste your experience here..."
+            className="w-full h-[300px] bg-slate-950/80 border border-slate-700/50 rounded-3xl pt-14 p-6 text-slate-300 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none resize-none placeholder-slate-600 font-mono text-sm leading-relaxed shadow-xl"
           />
-
-          <button
-            onClick={onSubmit}
-            disabled={!text || isProcessing}
-            className={`w-full py-4 rounded-xl font-bold text-lg transition-all transform ${!text || isProcessing ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white hover:scale-[1.02] shadow-lg shadow-emerald-500/20'}`}
-          >
-            {isProcessing ? (
-              <span className="flex items-center justify-center gap-2">
-                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                 Analyzing...
-              </span>
-            ) : (
-              'Analyze & Start'
-            )}
-          </button>
         </div>
+
+        <button
+          onClick={onSubmit}
+          disabled={!text || isProcessing}
+          className={`w-full py-5 rounded-2xl font-bold text-lg transition-all duration-300 ${
+            !text || isProcessing 
+              ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+              : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-1'
+          }`}
+        >
+          {isProcessing ? (
+            <span className="flex items-center justify-center gap-3">
+               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+               Processing...
+            </span>
+          ) : (
+            'Analyze & Continue'
+          )}
+        </button>
       </div>
+
     </div>
   );
 };
